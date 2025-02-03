@@ -104,6 +104,18 @@ export function validateVersion(newVersion) {
  * @param {string} newVersion
  */
 export function updateChangelog(newVersion) {
+  // Skip the entire function if the release version is internal eg: 5.1.0-internal.0
+  if (versionIsAPrerelease(newVersion)) {
+    const identifier = getPrereleaseIdentifierAndBase(newVersion)[0]
+
+    if (identifier === 'internal') {
+      console.log(
+        'This is an internal release, intended for testing only. The changelog will therefore not be updated.'
+      )
+      return
+    }
+  }
+
   const changelogLines = getChangelogLines()
   const [startIndex, previousReleaseLineIndex] =
     getChangelogLineIndexes(changelogLines)

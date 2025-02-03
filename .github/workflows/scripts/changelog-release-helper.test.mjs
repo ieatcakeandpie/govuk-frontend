@@ -54,6 +54,11 @@ describe('Changelog release helper', () => {
           badVersion: '3.0.2',
           type: 'patch',
           goodVersion: '3.0.1'
+        },
+        {
+          badVersion: '3.0.2-beta.0',
+          type: 'prepatch',
+          goodVersion: '3.0.1-beta.0'
         }
       ]
 

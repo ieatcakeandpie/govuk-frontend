@@ -45,16 +45,51 @@ export function validateVersion(newVersion) {
     )
   }
 
-  // Get the version diff keyword (major, minor or patch) which we can use to
-  // help with validating the new version
+  // Get the version diff keyword (major, minor, patch plus prerelease versions
+  // of those 3) which we can use to help with validating the new version
   const versionDiff = semver.diff(newVersion, previousReleaseNumber)
 
-  if (versionDiff === 'major') {
-    checkVersionIncrement(newVersion, previousReleaseNumber, 'major')
-  } else if (versionDiff === 'minor') {
-    checkVersionIncrement(newVersion, previousReleaseNumber, 'minor')
-  } else if (versionDiff === 'patch') {
-    checkVersionIncrement(newVersion, previousReleaseNumber, 'patch')
+  if (!versionDiff) {
+    throw new Error(
+      'Could not determine difference between new and previous versions. Please check the version number you provided and the changelog content.'
+    )
+  }
+
+  // Check if the new version increments from the old version by one for
+  // its change type (major, minor, patch) and throws an error if it doesn't.
+  // Eg: if the current version is 4.3.12:
+  // - 4.3.13, 4.4.0 and 5.0.0 are valid
+  // - 4.3.14, 4.5.0, 6.0.0 and above for all aren't valid
+  let correctIncrement = semver.inc(previousReleaseNumber, versionDiff)
+
+  // We coerce the semvers here to create 2 'plain' semvers in case one of them
+  // is a pre-release eg: 6.1.0-beta.0. This makes it easier to compare the
+  // versions by their major, minor and patch increments.
+  const coercedNewVersion = semver.coerce(newVersion)
+  const coerceCorrectIncrement = semver.coerce(correctIncrement)
+
+  // We check the coerced new version only because there's a chance it could be
+  // null whereas the correct inc we know is a product of semver's processing
+  if (!correctIncrement || !coercedNewVersion || !coerceCorrectIncrement) {
+    throw new Error(
+      'There was a problem comparing the provided version and the most recent version. The format of the provided version may be invalid semver.'
+    )
+  }
+
+  if (!semver.satisfies(coercedNewVersion, `<=${coerceCorrectIncrement}`)) {
+    if (versionIsAPrerelease(newVersion)) {
+      const [identifier, base] = getPrereleaseIdentifierAndBase(newVersion)
+      correctIncrement = semver.inc(
+        correctIncrement,
+        'prerelease',
+        identifier,
+        base
+      )
+    }
+
+    throw new Error(
+      `New version number ${newVersion} is incrementing more than one for its increment type (${versionDiff}). Please provide a version number than only increments by one from the current version. In this case, it's likely that your new version number should be: ${correctIncrement}`
+    )
   }
 
   console.log('No errors noted in the new version. We can proceed!')
@@ -202,25 +237,36 @@ function convertVersionHeadingToSemver(heading) {
 }
 
 /**
- * Checks to see if the new version increments from the old version by one for
- * its change type (major, minor or patch) and throws an error if it doesn't.
- * Eg: if the current version is 4.3.12:
+ * Checks if a version string is a pre-release or not
  *
- * - 4.3.13, 4.4.0 and 5.0.0 are valid
- * - 4.3.14, 4.5.0, 6.0.0 and above for all aren't valid
+ * Returns true only if a semver is a pre-release with an identifier and an
+ * identifier base, eg:
  *
- * @param {string} newVersion
- * @param {string} oldVersion
- * @param {import('semver').ReleaseType} incType
+ * - 4.0.0 - false
+ * - 4.0.0-beta false
+ * - 4.0.0-0 false
+ * - 4.0.0.beta.0 true
+ *
+ * @param {string} version
+ * @returns {boolean} - If the passed version is a pre-release or not
  */
-function checkVersionIncrement(newVersion, oldVersion, incType) {
-  const correctIncrement = semver.inc(oldVersion, incType)
+function versionIsAPrerelease(version) {
+  return /^\d+\.\d+\.\d+-\D+\.\d+$/i.test(version)
+}
 
-  if (!semver.satisfies(newVersion, `<=${correctIncrement}`)) {
-    throw new Error(
-      `New version number ${newVersion} is incrementing more than one for its increment type (${incType}). Please provide a version number than only increments by one from the current version. In this case, it's likely that your new version number should be: ${correctIncrement}`
-    )
-  }
+/**
+ * Get the identifier and identifier base of a pre-release semver
+ *
+ * @param {string} version
+ * @returns {[string, '0'|'1']} - the identifier and base of the pre-release
+ *   ie: 0.0.0-{identifier}.{base}
+ */
+function getPrereleaseIdentifierAndBase(version) {
+  const lastDotIndex = version.lastIndexOf('.')
+  const identifier = version.substring(version.indexOf('-') + 1, lastDotIndex)
+  const base = version.substring(lastDotIndex + 1)
+
+  return [identifier, base !== '0' ? '1' : '0']
 }
 
 /**

@@ -197,7 +197,7 @@ function getChangelogLines() {
  * @returns {Array<number>} - Indexes in the changelog identifying start and end lines
  */
 function getChangelogLineIndexes(changelogLines, fromUnreleasedHeading = true) {
-  const versionTitleRegex = /^\s*#+\s+v\d+\.\d+\.\d+\s+\(.+\)$/i
+  const versionTitleRegex = /^\s*#+\s+v\d+\.\d+\.\d+(-.+\.\d+)?\s+\(.+\)$/i
   const startIndex = findIndexOfFirstMatchingLine(
     changelogLines,
     fromUnreleasedHeading ? /^\s*#+\s+Unreleased\s*$/i : versionTitleRegex

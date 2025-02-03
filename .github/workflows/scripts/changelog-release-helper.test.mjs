@@ -102,13 +102,33 @@ describe('Changelog release helper', () => {
     })
 
     it('writes release notes from the changelog from the last version heading', () => {
+      jest.mocked(fs.readFileSync).mockReturnValue(`
+        ## Unreleased
+
+        ## v3.1.0 (Feature release)
+
+        ### Fixes
+
+        Bing bong
+
+        ## v3.0.0 (Breaking release)
+      `)
+
+      generateReleaseNotes()
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        './release-notes-body',
+        expect.stringContaining('Bing bong')
+      )
+    })
+
+    it('writes release notes from the changelog from the last version heading if that version is a pre-release', () => {
       // re-mock the readFileSync return value as if we'd just run
       // updateChangelog and the contents we wanted was between the new and
       // current version headings
       jest.mocked(fs.readFileSync).mockReturnValue(`
         ## Unreleased
 
-        ## v3.1.0 (Feature release)
+        ## v3.1.0-beta.0 (Feature release)
 
         ### Fixes
 

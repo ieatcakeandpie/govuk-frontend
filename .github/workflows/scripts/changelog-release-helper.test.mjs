@@ -79,6 +79,14 @@ describe('Changelog release helper', () => {
       )
     })
 
+    it('prefixes a new heading with a pre-release identifier if the new veresion is a pre-release', () => {
+      updateChangelog('3.1.0-beta.0')
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        './CHANGELOG.md',
+        expect.stringContaining('## v3.1.0-beta.0 (Beta feature release)')
+      )
+    })
+
     it('does not change the changelog if the provided version is an internal pre-release', () => {
       const consoleLogSpy = jest.spyOn(console, 'log')
 

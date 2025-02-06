@@ -447,24 +447,24 @@ describe('Input', () => {
       expect($suffix).toContainHTML('<span>kg</span>')
     })
 
-    it('includes additional classes from the `prefix.classes` option', () => {
+    it('includes additional classes from the `suffix.classes` option', () => {
       document.body.innerHTML = render(
         'input',
-        examples['with prefix with classes']
+        examples['with suffix with classes']
       )
-      const $prefix = document.querySelector('.govuk-input__prefix')
+      const $suffix = document.querySelector('.govuk-input__suffix')
 
-      expect($prefix).toHaveClass('app-input__prefix--custom-modifier')
+      expect($suffix).toHaveClass('app-input__suffix--custom-modifier')
     })
 
-    it('sets additional attributes from the `prefix.attributes` option', () => {
+    it('sets additional attributes from the `suffix.attributes` option', () => {
       document.body.innerHTML = render(
         'input',
-        examples['with prefix with attributes']
+        examples['with suffix with attributes']
       )
-      const $prefix = document.querySelector('.govuk-input__prefix')
+      const $suffix = document.querySelector('.govuk-input__suffix')
 
-      expect($prefix).toHaveAttribute('data-attribute', 'value')
+      expect($suffix).toHaveAttribute('data-attribute', 'value')
     })
   })
 
